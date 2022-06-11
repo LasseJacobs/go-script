@@ -1,5 +1,10 @@
 package main
 
+import (
+	"fmt"
+	"strconv"
+)
+
 type Scanner struct {
 	source string
 	tokens []Token
@@ -13,10 +18,13 @@ func NewScanner(source string) *Scanner {
 	return &Scanner{source: source, start: 0, current: 0, line: 1}
 }
 
-func (s *Scanner) ScanTokens() {
+func (s *Scanner) ScanTokens() []Token {
 	for !s.isAtEnd() {
-
+		s.start = s.current
+		s.scanToken()
 	}
+	s.addToken(TT_EOF, nil)
+	return s.tokens
 }
 
 func (s *Scanner) isAtEnd() bool {
@@ -93,9 +101,14 @@ func (s *Scanner) scanToken() {
 	case '"':
 		s.scanString()
 	default:
-		fault(s.line, "Unexpected character")
+		if s.isDigit(c) {
+			s.scanNumber()
+		} else if s.isAlpha(c) {
+			s.scanIdentifier()
+		} else {
+			fault(s.line, "Unexpected character")
+		}
 	}
-
 }
 
 func (s *Scanner) peek() byte {
@@ -104,6 +117,14 @@ func (s *Scanner) peek() byte {
 		return '\000'
 	}
 	return s.source[s.current]
+}
+
+func (s *Scanner) peekNext() byte {
+	if s.current+1 >= len(s.source) {
+		//null character
+		return '\000'
+	}
+	return s.source[s.current+1]
 }
 
 func (s *Scanner) match(r byte) bool {
@@ -119,12 +140,27 @@ func (s *Scanner) match(r byte) bool {
 
 func (s *Scanner) addToken(tokenType TokenType, literal interface{}) {
 	var text string = s.source[s.start:s.current]
+	if tokenType == TT_EOF {
+		text = ""
+	}
 	s.tokens = append(s.tokens, Token{
 		TokenType: tokenType,
 		Lexeme:    string(text),
 		Literal:   literal,
 		Line:      s.line,
 	})
+}
+
+func (s *Scanner) isDigit(c byte) bool {
+	return c >= '0' && c <= '9'
+}
+
+func (s *Scanner) isAlpha(c byte) bool {
+	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
+}
+
+func (s *Scanner) isAlphaNumeric(c byte) bool {
+	return s.isAlpha(c) || s.isDigit(c)
 }
 
 func (s *Scanner) scanString() {
@@ -141,4 +177,39 @@ func (s *Scanner) scanString() {
 	_ = s.advance()
 	var value = s.source[s.start+1 : s.current-1]
 	s.addToken(TT_STRING, value)
+}
+
+func (s *Scanner) scanNumber() {
+	for s.isDigit(s.peek()) {
+		_ = s.advance()
+	}
+	if s.peek() == '.' && s.isDigit(s.peekNext()) {
+		//consume '.'
+		_ = s.advance()
+		//parse fractional
+		for s.isDigit(s.peek()) {
+			_ = s.advance()
+		}
+	}
+	var value, err = strconv.ParseFloat(s.source[s.start:s.current], 32)
+	if err != nil {
+		//this should never happen
+		panic(fmt.Errorf("failed to scan number: %s", err))
+	}
+	s.addToken(TT_NUMBER, value)
+}
+
+func (s *Scanner) scanIdentifier() {
+	// by having the scan path isAlpha but the loop isAlphaNumeric,
+	// identifiers are restricted to starting with an alpha character
+	for s.isAlphaNumeric(s.peek()) {
+		_ = s.advance()
+	}
+
+	var text = s.source[s.start:s.current]
+	var t_type = keywords[text]
+	if t_type == TT_NO_TOKEN {
+		t_type = TT_IDENTIFIER
+	}
+	s.addToken(t_type, nil)
 }

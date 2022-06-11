@@ -24,7 +24,11 @@ func report(line int, where string, message string) {
 }
 
 func run(source string) {
-
+	var scanner = NewScanner(source)
+	var tokens = scanner.ScanTokens()
+	for _, t := range tokens {
+		fmt.Println(t.String())
+	}
 }
 
 func runPrompt() {
@@ -34,6 +38,7 @@ func runPrompt() {
 		line, err := reader.ReadString('\n')
 		check(err)
 		run(line)
+		hasError = false
 	}
 }
 
@@ -41,6 +46,9 @@ func runScript(filename string) {
 	bytes, err := os.ReadFile(filename)
 	check(err)
 	run(string(bytes))
+	if hasError == true {
+		os.Exit(64)
+	}
 }
 
 func main() {

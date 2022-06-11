@@ -5,8 +5,10 @@ import "fmt"
 type TokenType int8
 
 const (
+	// Default value
+	TT_NO_TOKEN = iota
 	// Single-character tokens.
-	TT_LEFT_PAREN = iota
+	TT_LEFT_PAREN
 	TT_RIGHT_PAREN
 	TT_LEFT_BRACE
 	TT_RIGHT_BRACE
