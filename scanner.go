@@ -1,7 +1,7 @@
 package main
 
 type Scanner struct {
-	source []rune
+	source string
 	tokens []Token
 
 	start   int
@@ -10,8 +10,7 @@ type Scanner struct {
 }
 
 func NewScanner(source string) *Scanner {
-	//TODO: rune conversion should be done at advance time. I see no reason to store a rune array
-	return &Scanner{source: []rune(source), start: 0, current: 0, line: 1}
+	return &Scanner{source: source, start: 0, current: 0, line: 1}
 }
 
 func (s *Scanner) ScanTokens() {
@@ -24,14 +23,14 @@ func (s *Scanner) isAtEnd() bool {
 	return s.current >= len(s.source)
 }
 
-func (s *Scanner) advance() rune {
+func (s *Scanner) advance() byte {
 	var c = s.source[s.current]
 	s.current++
 	return c
 }
 
 func (s *Scanner) scanToken() {
-	var c rune = s.advance()
+	var c byte = s.advance()
 	switch c {
 	case '(':
 		s.addToken(TT_LEFT_PAREN, nil)
@@ -99,7 +98,7 @@ func (s *Scanner) scanToken() {
 
 }
 
-func (s *Scanner) peek() rune {
+func (s *Scanner) peek() byte {
 	if s.isAtEnd() {
 		//null character
 		return '\000'
@@ -107,7 +106,7 @@ func (s *Scanner) peek() rune {
 	return s.source[s.current]
 }
 
-func (s *Scanner) match(r rune) bool {
+func (s *Scanner) match(r byte) bool {
 	if s.isAtEnd() {
 		return false
 	}
@@ -119,7 +118,7 @@ func (s *Scanner) match(r rune) bool {
 }
 
 func (s *Scanner) addToken(tokenType TokenType, literal interface{}) {
-	var text []rune = s.source[s.start:s.current]
+	var text string = s.source[s.start:s.current]
 	s.tokens = append(s.tokens, Token{
 		TokenType: tokenType,
 		Lexeme:    string(text),
@@ -141,5 +140,5 @@ func (s *Scanner) scanString() {
 	//closing "
 	_ = s.advance()
 	var value = s.source[s.start+1 : s.current-1]
-	s.addToken(TT_STRING, string(value))
+	s.addToken(TT_STRING, value)
 }
