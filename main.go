@@ -51,7 +51,7 @@ func runScript(filename string) {
 	}
 }
 
-func main() {
+func main2() {
 	if len(os.Args) == 1 {
 		runPrompt()
 	} else if len(os.Args) == 2 {
