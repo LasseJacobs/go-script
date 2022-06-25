@@ -18,17 +18,31 @@ func fault(line int, message string) {
 	report(line, "", message)
 }
 
+func parseFault(token Token, message string) {
+	if token.TokenType == TT_EOF {
+		report(token.Line, " at end", message)
+	} else {
+		report(token.Line, " at '"+token.Lexeme+"'", message)
+	}
+}
+
 func report(line int, where string, message string) {
-	fmt.Printf("[line %d] %s: %s", line, where, message)
+	fmt.Printf("[line %d] %s: %s\n", line, where, message)
 	hasError = true
 }
 
 func run(source string) {
 	var scanner = NewScanner(source)
 	var tokens = scanner.ScanTokens()
-	for _, t := range tokens {
-		fmt.Println(t.String())
+
+	var parser = NewParser(tokens)
+	expr := parser.Parse()
+
+	if hasError {
+		return
 	}
+	printer := AstPrinter{}
+	fmt.Println(printer.Print(expr))
 }
 
 func runPrompt() {
@@ -51,7 +65,7 @@ func runScript(filename string) {
 	}
 }
 
-func main2() {
+func main() {
 	if len(os.Args) == 1 {
 		runPrompt()
 	} else if len(os.Args) == 2 {

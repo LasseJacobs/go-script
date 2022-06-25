@@ -5,6 +5,7 @@ import (
 	"strings"
 )
 
+/*
 func main() {
 	var expr Expression = BinaryExpression{
 		Left: UnaryExpression{
@@ -22,6 +23,7 @@ func main() {
 	var printer = AstPrinter{}
 	fmt.Println(printer.Print(expr))
 }
+*/
 
 type AstPrinter struct {
 }
