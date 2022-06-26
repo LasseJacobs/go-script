@@ -6,7 +6,8 @@ import (
 	"os"
 )
 
-var hasError bool
+var hadError bool
+var hadRuntimeError bool
 
 func check(e error) {
 	if e != nil {
@@ -28,7 +29,12 @@ func parseFault(token Token, message string) {
 
 func report(line int, where string, message string) {
 	fmt.Printf("[line %d] %s: %s\n", line, where, message)
-	hasError = true
+	hadError = true
+}
+
+func runtimeFault(err RuntimeError) {
+	fmt.Printf("[line %d] %s\n", err.token.Line, err.message)
+	hadRuntimeError = true
 }
 
 func run(source string) {
@@ -38,11 +44,12 @@ func run(source string) {
 	var parser = NewParser(tokens)
 	expr := parser.Parse()
 
-	if hasError {
+	if hadError {
 		return
 	}
-	printer := AstPrinter{}
-	fmt.Println(printer.Print(expr))
+
+	var interpreter = NewInterpreter()
+	interpreter.Interpret(expr)
 }
 
 func runPrompt() {
@@ -52,7 +59,7 @@ func runPrompt() {
 		line, err := reader.ReadString('\n')
 		check(err)
 		run(line)
-		hasError = false
+		hadError = false
 	}
 }
 
@@ -60,8 +67,11 @@ func runScript(filename string) {
 	bytes, err := os.ReadFile(filename)
 	check(err)
 	run(string(bytes))
-	if hasError == true {
+	if hadError == true {
 		os.Exit(64)
+	}
+	if hadRuntimeError == true {
+		os.Exit(70)
 	}
 }
 

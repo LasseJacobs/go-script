@@ -1,14 +1,14 @@
 package main
 
 type Expression interface {
-	Accept(visitor ExpressionVisitor) string
+	Accept(visitor ExpressionVisitor) Any
 }
 
 type ExpressionVisitor interface {
-	visitBinaryExpr(expr BinaryExpression) string
-	visitGroupingExpr(expr GroupingExpression) string
-	visitLiteralExpr(expr LiteralExpression) string
-	visitUnaryExpr(expr UnaryExpression) string
+	visitBinaryExpr(expr BinaryExpression) Any
+	visitGroupingExpr(expr GroupingExpression) Any
+	visitLiteralExpr(expr LiteralExpression) Any
+	visitUnaryExpr(expr UnaryExpression) Any
 }
 
 type BinaryExpression struct {
@@ -17,7 +17,7 @@ type BinaryExpression struct {
 	Right    Expression
 }
 
-func (b BinaryExpression) Accept(visitor ExpressionVisitor) string {
+func (b BinaryExpression) Accept(visitor ExpressionVisitor) Any {
 	return visitor.visitBinaryExpr(b)
 }
 
@@ -25,7 +25,7 @@ type GroupingExpression struct {
 	Expression Expression
 }
 
-func (b GroupingExpression) Accept(visitor ExpressionVisitor) string {
+func (b GroupingExpression) Accept(visitor ExpressionVisitor) Any {
 	return visitor.visitGroupingExpr(b)
 }
 
@@ -33,7 +33,7 @@ type LiteralExpression struct {
 	Value interface{}
 }
 
-func (b LiteralExpression) Accept(visitor ExpressionVisitor) string {
+func (b LiteralExpression) Accept(visitor ExpressionVisitor) Any {
 	return visitor.visitLiteralExpr(b)
 }
 
@@ -42,6 +42,6 @@ type UnaryExpression struct {
 	Right    Expression
 }
 
-func (b UnaryExpression) Accept(visitor ExpressionVisitor) string {
+func (b UnaryExpression) Accept(visitor ExpressionVisitor) Any {
 	return visitor.visitUnaryExpr(b)
 }

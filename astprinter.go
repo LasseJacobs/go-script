@@ -29,25 +29,25 @@ type AstPrinter struct {
 }
 
 func (a *AstPrinter) Print(expr Expression) string {
-	return expr.Accept(a)
+	return a.stringify(expr.Accept(a))
 }
 
-func (a *AstPrinter) visitBinaryExpr(expr BinaryExpression) string {
+func (a *AstPrinter) visitBinaryExpr(expr BinaryExpression) Any {
 	return a.parenthesize(expr.Operator.Lexeme, expr.Left, expr.Right)
 }
 
-func (a *AstPrinter) visitGroupingExpr(expr GroupingExpression) string {
+func (a *AstPrinter) visitGroupingExpr(expr GroupingExpression) Any {
 	return a.parenthesize("group", expr.Expression)
 }
 
-func (a *AstPrinter) visitLiteralExpr(expr LiteralExpression) string {
+func (a *AstPrinter) visitLiteralExpr(expr LiteralExpression) Any {
 	if expr.Value == nil {
 		return "nil"
 	}
 	return fmt.Sprintf("%s", expr.Value)
 }
 
-func (a *AstPrinter) visitUnaryExpr(expr UnaryExpression) string {
+func (a *AstPrinter) visitUnaryExpr(expr UnaryExpression) Any {
 	return a.parenthesize(expr.Operator.Lexeme, expr.Right)
 }
 
@@ -57,8 +57,12 @@ func (a *AstPrinter) parenthesize(name string, exprs ...Expression) string {
 	sb.WriteString(name)
 	for _, e := range exprs {
 		sb.WriteString(" ")
-		sb.WriteString(e.Accept(a))
+		sb.WriteString(a.stringify(e.Accept(a)))
 	}
 	sb.WriteString(")")
 	return sb.String()
+}
+
+func (a *AstPrinter) stringify(object Any) string {
+	return fmt.Sprintf("%s", object)
 }
