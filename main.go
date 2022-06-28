@@ -42,14 +42,14 @@ func run(source string) {
 	var tokens = scanner.ScanTokens()
 
 	var parser = NewParser(tokens)
-	expr := parser.Parse()
+	stmts := parser.Parse()
 
 	if hadError {
 		return
 	}
 
 	var interpreter = NewInterpreter()
-	interpreter.Interpret(expr)
+	interpreter.Interpret(stmts)
 }
 
 func runPrompt() {

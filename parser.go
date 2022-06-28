@@ -24,11 +24,43 @@ func NewParser(tokens []Token) *Parser {
 	return &Parser{tokens: tokens, current: 0}
 }
 
-func (p *Parser) Parse() Expression {
+func (p *Parser) Parse() []Statement {
 	defer func() {
 		recover()
 	}()
-	return p.expression()
+	/*
+		List<Stmt> statements = new ArrayList<>();
+		    while (!isAtEnd()) {
+		      statements.add(statement());
+		    }
+
+		    return statements;
+	*/
+	var statements []Statement
+	for !p.isAtEnd() {
+		statements = append(statements, p.statement())
+	}
+
+	return statements
+}
+
+func (p *Parser) statement() Statement {
+	if p.match(TT_PRINT) {
+		return p.printStatement()
+	}
+	return p.expressionStatement()
+}
+
+func (p *Parser) printStatement() Statement {
+	value := p.expression()
+	p.consume(TT_SEMICOLON, "Expect ';' after value.")
+	return PrintStatement{Expression: value}
+}
+
+func (p *Parser) expressionStatement() Statement {
+	expr := p.expression()
+	p.consume(TT_SEMICOLON, "Expect ';' after expression.")
+	return ExpressionStatement{Expression: expr}
 }
 
 func (p *Parser) expression() Expression {

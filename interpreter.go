@@ -25,14 +25,19 @@ func NewInterpreter() *Interpreter {
 	return &Interpreter{}
 }
 
-func (i *Interpreter) Interpret(expr Expression) {
+func (i *Interpreter) Interpret(statements []Statement) {
 	defer func() {
 		if err := recover(); err != nil {
 			runtimeFault(err.(RuntimeError))
 		}
 	}()
-	var value Any = i.evaluate(expr)
-	fmt.Println(i.stringify(value))
+	for _, s := range statements {
+		i.execute(s)
+	}
+}
+
+func (i *Interpreter) execute(statement Statement) {
+	statement.Accept(i)
 }
 
 func (i *Interpreter) visitBinaryExpr(expr BinaryExpression) Any {
@@ -103,6 +108,23 @@ func (i *Interpreter) visitUnaryExpr(expr UnaryExpression) Any {
 	return nil
 }
 
+/*
+	Statement interface
+*/
+func (i *Interpreter) visitExprStmt(stmt ExpressionStatement) Any {
+	i.evaluate(stmt.Expression)
+	return nil
+}
+
+func (i *Interpreter) visitPrintStmt(stmt PrintStatement) Any {
+	value := i.evaluate(stmt.Expression)
+	fmt.Printf("%s\n", i.stringify(value))
+	return nil
+}
+
+/*
+	Helpers
+*/
 func (i *Interpreter) evaluate(expr Expression) Any {
 	return expr.Accept(i)
 }
