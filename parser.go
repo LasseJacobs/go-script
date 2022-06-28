@@ -2,17 +2,6 @@ package main
 
 import "fmt"
 
-/*
-class Parser {
-private final List<Token> tokens;
-private int current = 0;
-
-Parser(List<Token> tokens) {
-this.tokens = tokens;
-}
-}
-*/
-
 var ParseError error = fmt.Errorf("an error occured during parsing")
 
 type Parser struct {
@@ -28,20 +17,33 @@ func (p *Parser) Parse() []Statement {
 	defer func() {
 		recover()
 	}()
-	/*
-		List<Stmt> statements = new ArrayList<>();
-		    while (!isAtEnd()) {
-		      statements.add(statement());
-		    }
 
-		    return statements;
-	*/
 	var statements []Statement
 	for !p.isAtEnd() {
-		statements = append(statements, p.statement())
+		statements = append(statements, p.declaration())
 	}
 
 	return statements
+}
+
+func (p *Parser) declaration() Statement {
+	defer p.recover()
+	if p.match(TT_VAR) {
+		return p.varDeclaration()
+	}
+	return p.statement()
+}
+
+func (p *Parser) recover() {
+	e := recover()
+	switch e {
+	case nil:
+		return
+	case ParseError:
+		p.synchronize()
+	default:
+		panic(e)
+	}
 }
 
 func (p *Parser) statement() Statement {
@@ -49,6 +51,19 @@ func (p *Parser) statement() Statement {
 		return p.printStatement()
 	}
 	return p.expressionStatement()
+}
+
+func (p *Parser) varDeclaration() Statement {
+	var name Token = p.consume(TT_IDENTIFIER, "Expect variable name.")
+	var initializer Expression = nil
+	if p.match(TT_EQUAL) {
+		initializer = p.expression()
+	}
+	p.consume(TT_SEMICOLON, "Expect ';' after variable declaration")
+	return VarStatement{
+		Name:        name,
+		Initializer: initializer,
+	}
 }
 
 func (p *Parser) printStatement() Statement {
@@ -140,6 +155,9 @@ func (p *Parser) primary() Expression {
 
 	if p.match(TT_NUMBER, TT_STRING) {
 		return LiteralExpression{p.previous().Literal}
+	}
+	if p.match(TT_IDENTIFIER) {
+		return VariableExpression{Name: p.previous()}
 	}
 	if p.match(TT_LEFT_PAREN) {
 		expr := p.expression()

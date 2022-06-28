@@ -7,6 +7,7 @@ type Statement interface {
 type StatementVisitor interface {
 	visitPrintStmt(expr PrintStatement) Any
 	visitExprStmt(expr ExpressionStatement) Any
+	visitVarStmt(expr VarStatement) Any
 }
 
 type PrintStatement struct {
@@ -23,4 +24,13 @@ type ExpressionStatement struct {
 
 func (e ExpressionStatement) Accept(visitor StatementVisitor) Any {
 	return visitor.visitExprStmt(e)
+}
+
+type VarStatement struct {
+	Name        Token
+	Initializer Expression
+}
+
+func (e VarStatement) Accept(visitor StatementVisitor) Any {
+	return visitor.visitVarStmt(e)
 }

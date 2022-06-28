@@ -9,6 +9,8 @@ import (
 var hadError bool
 var hadRuntimeError bool
 
+var interpreter *Interpreter
+
 func check(e error) {
 	if e != nil {
 		panic(e)
@@ -48,7 +50,6 @@ func run(source string) {
 		return
 	}
 
-	var interpreter = NewInterpreter()
 	interpreter.Interpret(stmts)
 }
 
@@ -76,6 +77,7 @@ func runScript(filename string) {
 }
 
 func main() {
+	interpreter = NewInterpreter()
 	if len(os.Args) == 1 {
 		runPrompt()
 	} else if len(os.Args) == 2 {

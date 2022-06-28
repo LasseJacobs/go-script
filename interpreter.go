@@ -1,6 +1,8 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+)
 
 /*
 class RuntimeError extends RuntimeException {
@@ -18,11 +20,16 @@ type RuntimeError struct {
 	message string
 }
 
+func NewRuntimeError(token Token, message string) RuntimeError {
+	return RuntimeError{token: token, message: message}
+}
+
 type Interpreter struct {
+	env *Environment
 }
 
 func NewInterpreter() *Interpreter {
-	return &Interpreter{}
+	return &Interpreter{env: NewEnvironment()}
 }
 
 func (i *Interpreter) Interpret(statements []Statement) {
@@ -108,6 +115,10 @@ func (i *Interpreter) visitUnaryExpr(expr UnaryExpression) Any {
 	return nil
 }
 
+func (i *Interpreter) visitVarExpr(expr VariableExpression) Any {
+	return i.env.get(expr.Name)
+}
+
 /*
 	Statement interface
 */
@@ -119,6 +130,15 @@ func (i *Interpreter) visitExprStmt(stmt ExpressionStatement) Any {
 func (i *Interpreter) visitPrintStmt(stmt PrintStatement) Any {
 	value := i.evaluate(stmt.Expression)
 	fmt.Printf("%s\n", i.stringify(value))
+	return nil
+}
+
+func (i *Interpreter) visitVarStmt(stmt VarStatement) Any {
+	var value Any = nil
+	if stmt.Initializer != nil {
+		value = i.evaluate(stmt.Initializer)
+	}
+	i.env.define(stmt.Name.Lexeme, value)
 	return nil
 }
 

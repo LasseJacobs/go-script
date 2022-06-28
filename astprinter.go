@@ -1,10 +1,5 @@
 package main
 
-import (
-	"fmt"
-	"strings"
-)
-
 /*
 func main() {
 	var expr Expression = BinaryExpression{
@@ -25,6 +20,7 @@ func main() {
 }
 */
 
+/*
 type AstPrinter struct {
 }
 
@@ -66,3 +62,4 @@ func (a *AstPrinter) parenthesize(name string, exprs ...Expression) string {
 func (a *AstPrinter) stringify(object Any) string {
 	return fmt.Sprintf("%s", object)
 }
+*/
