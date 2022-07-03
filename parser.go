@@ -50,6 +50,9 @@ func (p *Parser) statement() Statement {
 	if p.match(TT_PRINT) {
 		return p.printStatement()
 	}
+	if p.match(TT_LEFT_BRACE) {
+		return BlockStatement{Statements: p.block()}
+	}
 	return p.expressionStatement()
 }
 
@@ -78,8 +81,35 @@ func (p *Parser) expressionStatement() Statement {
 	return ExpressionStatement{Expression: expr}
 }
 
+func (p *Parser) block() []Statement {
+	var statements []Statement
+	for !p.check(TT_RIGHT_BRACE) && !p.isAtEnd() {
+		statements = append(statements, p.declaration())
+	}
+
+	p.consume(TT_RIGHT_BRACE, "Expect '}' after block.")
+	return statements
+}
+
 func (p *Parser) expression() Expression {
-	return p.equality()
+	return p.assignment()
+}
+
+func (p *Parser) assignment() Expression {
+	expr := p.equality()
+	if p.match(TT_EQUAL) {
+		var equals Token = p.previous()
+		var value Expression = p.assignment()
+		if varExpr, ok := expr.(VariableExpression); ok {
+			name := varExpr.Name
+			return AssignExpression{
+				Name:  name,
+				Value: value,
+			}
+		}
+		parseFault(equals, "Invalid assignment target.")
+	}
+	return expr
 }
 
 func (p *Parser) equality() Expression {

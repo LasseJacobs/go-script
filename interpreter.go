@@ -47,6 +47,32 @@ func (i *Interpreter) execute(statement Statement) {
 	statement.Accept(i)
 }
 
+/*
+  void executeBlock(List<Stmt> statements,
+                    Environment environment) {
+    Environment previous = this.environment;
+    try {
+      this.environment = environment;
+
+      for (Stmt statement : statements) {
+        execute(statement);
+      }
+    } finally {
+      this.environment = previous;
+    }
+  }
+*/
+func (i *Interpreter) executeBlock(statements []Statement, environment *Environment) {
+	previous := i.env
+	defer func() {
+		i.env = previous
+	}()
+	i.env = environment
+	for _, stmt := range statements {
+		i.execute(stmt)
+	}
+}
+
 func (i *Interpreter) visitBinaryExpr(expr BinaryExpression) Any {
 	left := i.evaluate(expr.Left)
 	right := i.evaluate(expr.Right)
@@ -119,6 +145,12 @@ func (i *Interpreter) visitVarExpr(expr VariableExpression) Any {
 	return i.env.get(expr.Name)
 }
 
+func (i *Interpreter) visitAssignExpr(expr AssignExpression) Any {
+	value := i.evaluate(expr.Value)
+	i.env.assign(expr.Name, value)
+	return value
+}
+
 /*
 	Statement interface
 */
@@ -139,6 +171,11 @@ func (i *Interpreter) visitVarStmt(stmt VarStatement) Any {
 		value = i.evaluate(stmt.Initializer)
 	}
 	i.env.define(stmt.Name.Lexeme, value)
+	return nil
+}
+
+func (i *Interpreter) visitBlockStmt(stmt BlockStatement) Any {
+	i.executeBlock(stmt.Statements, NewEnvironmentWithEnclosing(i.env))
 	return nil
 }
 

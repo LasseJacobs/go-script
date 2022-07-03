@@ -8,6 +8,7 @@ type StatementVisitor interface {
 	visitPrintStmt(expr PrintStatement) Any
 	visitExprStmt(expr ExpressionStatement) Any
 	visitVarStmt(expr VarStatement) Any
+	visitBlockStmt(expr BlockStatement) Any
 }
 
 type PrintStatement struct {
@@ -33,4 +34,12 @@ type VarStatement struct {
 
 func (e VarStatement) Accept(visitor StatementVisitor) Any {
 	return visitor.visitVarStmt(e)
+}
+
+type BlockStatement struct {
+	Statements []Statement
+}
+
+func (e BlockStatement) Accept(visitor StatementVisitor) Any {
+	return visitor.visitBlockStmt(e)
 }
