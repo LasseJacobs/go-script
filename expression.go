@@ -11,6 +11,7 @@ type ExpressionVisitor interface {
 	visitUnaryExpr(expr UnaryExpression) Any
 	visitVarExpr(expr VariableExpression) Any
 	visitAssignExpr(expr AssignExpression) Any
+	visitCallExpr(expr CallExpression) Any
 }
 
 type BinaryExpression struct {
@@ -63,4 +64,14 @@ type AssignExpression struct {
 
 func (b AssignExpression) Accept(visitor ExpressionVisitor) Any {
 	return visitor.visitAssignExpr(b)
+}
+
+type CallExpression struct {
+	Callee    Expression
+	Paren     Token
+	Arguments []Expression
+}
+
+func (b CallExpression) Accept(visitor ExpressionVisitor) Any {
+	return visitor.visitCallExpr(b)
 }

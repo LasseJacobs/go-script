@@ -14,12 +14,17 @@ operator       → "==" | "!=" | "<" | "<=" | ">" | ">="
 //V2
 program        → declaration* EOF ;
 
-declaration    → varDecl
+declaration    → funDecl
+               | varDecl
                | statement ;
 
 statement      → exprStmt
+               | ifStmt
                | printStmt
+               | whileStmt
                | block ;
+
+whileStmt      → "while" "(" expression ")" statement ;
 
 block          → "{" declaration* "}" ;
 
@@ -28,6 +33,10 @@ varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
 exprStmt       → expression ";" ;
 printStmt      → "print" expression ";" ;
 
+funDecl        → "fun" function ;
+function       → IDENTIFIER "(" parameters? ")" block ;
+parameters     → IDENTIFIER ( "," IDENTIFIER )* ;
+
 expression     → assignment ;
 assignment     → IDENTIFIER "=" assignment
                | equality ;
@@ -35,8 +44,9 @@ equality       → comparison ( ( "!=" | "==" ) comparison )* ;
 comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
 term           → factor ( ( "-" | "+" ) factor )* ;
 factor         → unary ( ( "/" | "*" ) unary )* ;
-unary          → ( "!" | "-" ) unary
-               | primary ;
+unary          → ( "!" | "-" ) unary | call ;
+call           → primary ( "(" arguments? ")" )* ;
+arguments      → expression ( "," expression )* ;
 primary        → NUMBER | STRING | "true" | "false" | "nil"
                | "(" expression ")" ;
 

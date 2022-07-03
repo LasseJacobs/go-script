@@ -28,6 +28,9 @@ func (p *Parser) Parse() []Statement {
 
 func (p *Parser) declaration() Statement {
 	defer p.recover()
+	if p.match(TT_FUN) {
+		return p.function()
+	}
 	if p.match(TT_VAR) {
 		return p.varDeclaration()
 	}
@@ -72,6 +75,31 @@ func (p *Parser) varDeclaration() Statement {
 	}
 }
 
+func (p *Parser) function() FunctionStatement {
+	fnName := p.consume(TT_IDENTIFIER, "Expect function name.")
+	p.consume(TT_LEFT_PAREN, "Expect '(' after function name.")
+	var parameters []Token
+	if !p.check(TT_RIGHT_PAREN) {
+		for true {
+			if len(parameters) >= 255 {
+				parseFault(p.peek(), "Can't have more than 255 parameters.")
+			}
+			parameters = append(parameters, p.consume(TT_IDENTIFIER, "Expect parameter name."))
+			if !p.match(TT_COMMA) {
+				break
+			}
+		}
+	}
+	p.consume(TT_RIGHT_PAREN, "Expect ')' after parameters.")
+	p.consume(TT_LEFT_BRACE, "Expect '{' before function body.")
+	body := p.block()
+	return FunctionStatement{
+		Name:   fnName,
+		Params: parameters,
+		Body:   body,
+	}
+}
+
 func (p *Parser) printStatement() Statement {
 	value := p.expression()
 	p.consume(TT_SEMICOLON, "Expect ';' after value.")
@@ -97,6 +125,17 @@ func (p *Parser) ifStatement() Statement {
 		Condition: condition,
 		ThenBlock: thenBranch,
 		ElseBlock: elseBranch,
+	}
+}
+
+func (p *Parser) whileStatement() Statement {
+	p.consume(TT_LEFT_PAREN, "Expect '(' after 'while'.")
+	condition := p.expression()
+	p.consume(TT_LEFT_PAREN, "Expect ')' after condition.")
+	body := p.statement()
+	return WhileStatement{
+		Condition: condition,
+		Body:      body,
 	}
 }
 
@@ -188,7 +227,40 @@ func (p *Parser) unary() Expression {
 			Right:    p.unary(),
 		}
 	}
-	return p.primary()
+	return p.call()
+}
+
+func (p *Parser) call() Expression {
+	expr := p.primary()
+	for true {
+		if p.match(TT_LEFT_PAREN) {
+			expr = p.finishCall(expr)
+		} else {
+			break
+		}
+	}
+	return expr
+}
+
+func (p *Parser) finishCall(callee Expression) Expression {
+	var arguments []Expression
+	if !p.check(TT_RIGHT_PAREN) {
+		for true {
+			if len(arguments) >= 255 {
+				parseFault(p.peek(), "Can't have more than 255 arguments.")
+			}
+			arguments = append(arguments, p.expression())
+			if !p.match(TT_COMMA) {
+				break
+			}
+		}
+	}
+	paren := p.consume(TT_RIGHT_PAREN, "Expect ')' after arguments.")
+	return CallExpression{
+		Callee:    callee,
+		Paren:     paren,
+		Arguments: arguments,
+	}
 }
 
 func (p *Parser) primary() Expression {

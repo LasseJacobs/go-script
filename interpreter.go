@@ -25,11 +25,14 @@ func NewRuntimeError(token Token, message string) RuntimeError {
 }
 
 type Interpreter struct {
-	env *Environment
+	globals *Environment
+	env     *Environment
 }
 
 func NewInterpreter() *Interpreter {
-	return &Interpreter{env: NewEnvironment()}
+	globals := NewEnvironment()
+	globals.define("clock", clockFn{})
+	return &Interpreter{globals: globals, env: globals}
 }
 
 func (i *Interpreter) Interpret(statements []Statement) {
@@ -47,21 +50,6 @@ func (i *Interpreter) execute(statement Statement) {
 	statement.Accept(i)
 }
 
-/*
-  void executeBlock(List<Stmt> statements,
-                    Environment environment) {
-    Environment previous = this.environment;
-    try {
-      this.environment = environment;
-
-      for (Stmt statement : statements) {
-        execute(statement);
-      }
-    } finally {
-      this.environment = previous;
-    }
-  }
-*/
 func (i *Interpreter) executeBlock(statements []Statement, environment *Environment) {
 	previous := i.env
 	defer func() {
@@ -151,6 +139,22 @@ func (i *Interpreter) visitAssignExpr(expr AssignExpression) Any {
 	return value
 }
 
+func (i *Interpreter) visitCallExpr(expr CallExpression) Any {
+	callee := i.evaluate(expr.Callee)
+	var arguments []Any
+	for _, arg := range expr.Arguments {
+		arguments = append(arguments, i.evaluate(arg))
+	}
+	function, ok := callee.(Callable)
+	if !ok {
+		panic(NewRuntimeError(expr.Paren, "Can only call functions."))
+	}
+	if len(arguments) != function.Arity() {
+		panic(NewRuntimeError(expr.Paren, fmt.Sprintf("Expected %d arguments but got %d.", function.Arity(), len(arguments))))
+	}
+	return function.Call(i, arguments)
+}
+
 /*
 	Statement interface
 */
@@ -185,6 +189,19 @@ func (i *Interpreter) visitIfStmt(stmt IfStatement) Any {
 	} else if stmt.ElseBlock != nil {
 		i.execute(stmt.ElseBlock)
 	}
+	return nil
+}
+
+func (i *Interpreter) visitWhileStmt(stmt WhileStatement) Any {
+	for i.isTruthy(i.evaluate(stmt.Condition)) {
+		i.execute(stmt.Body)
+	}
+	return nil
+}
+
+func (i *Interpreter) visitFunctionStmt(stmt FunctionStatement) Any {
+	function := NewFunction(stmt)
+	i.env.define(stmt.Name.Lexeme, function)
 	return nil
 }
 
