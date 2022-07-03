@@ -179,6 +179,15 @@ func (i *Interpreter) visitBlockStmt(stmt BlockStatement) Any {
 	return nil
 }
 
+func (i *Interpreter) visitIfStmt(stmt IfStatement) Any {
+	if i.isTruthy(i.evaluate(stmt.Condition)) {
+		i.execute(stmt.ThenBlock)
+	} else if stmt.ElseBlock != nil {
+		i.execute(stmt.ElseBlock)
+	}
+	return nil
+}
+
 /*
 	Helpers
 */

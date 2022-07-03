@@ -47,6 +47,9 @@ func (p *Parser) recover() {
 }
 
 func (p *Parser) statement() Statement {
+	if p.match(TT_IF) {
+		return p.ifStatement()
+	}
 	if p.match(TT_PRINT) {
 		return p.printStatement()
 	}
@@ -79,6 +82,22 @@ func (p *Parser) expressionStatement() Statement {
 	expr := p.expression()
 	p.consume(TT_SEMICOLON, "Expect ';' after expression.")
 	return ExpressionStatement{Expression: expr}
+}
+
+func (p *Parser) ifStatement() Statement {
+	p.consume(TT_LEFT_PAREN, "Expect '(' after 'if'.")
+	condition := p.expression()
+	p.consume(TT_RIGHT_PAREN, "Expect ')' after if condition.")
+	var thenBranch Statement = p.statement()
+	var elseBranch Statement = nil
+	if p.match(TT_ELSE) {
+		elseBranch = p.statement()
+	}
+	return IfStatement{
+		Condition: condition,
+		ThenBlock: thenBranch,
+		ElseBlock: elseBranch,
+	}
 }
 
 func (p *Parser) block() []Statement {
@@ -176,7 +195,7 @@ func (p *Parser) primary() Expression {
 	if p.match(TT_FALSE) {
 		return LiteralExpression{false}
 	}
-	if p.match(TT_FALSE) {
+	if p.match(TT_TRUE) {
 		return LiteralExpression{true}
 	}
 	if p.match(TT_NIL) {

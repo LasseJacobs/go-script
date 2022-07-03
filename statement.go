@@ -9,6 +9,7 @@ type StatementVisitor interface {
 	visitExprStmt(expr ExpressionStatement) Any
 	visitVarStmt(expr VarStatement) Any
 	visitBlockStmt(expr BlockStatement) Any
+	visitIfStmt(expr IfStatement) Any
 }
 
 type PrintStatement struct {
@@ -42,4 +43,14 @@ type BlockStatement struct {
 
 func (e BlockStatement) Accept(visitor StatementVisitor) Any {
 	return visitor.visitBlockStmt(e)
+}
+
+type IfStatement struct {
+	Condition Expression
+	ThenBlock Statement
+	ElseBlock Statement
+}
+
+func (b IfStatement) Accept(visitor StatementVisitor) Any {
+	return visitor.visitIfStmt(b)
 }
