@@ -53,6 +53,9 @@ func (p *Parser) statement() Statement {
 	if p.match(TT_IF) {
 		return p.ifStatement()
 	}
+	if p.match(TT_RETURN) {
+		return p.returnStatement()
+	}
 	if p.match(TT_PRINT) {
 		return p.printStatement()
 	}
@@ -60,6 +63,19 @@ func (p *Parser) statement() Statement {
 		return BlockStatement{Statements: p.block()}
 	}
 	return p.expressionStatement()
+}
+
+func (p *Parser) returnStatement() Statement {
+	keyword := p.previous()
+	var value Expression = nil
+	if !p.check(TT_SEMICOLON) {
+		value = p.expression()
+	}
+	p.consume(TT_SEMICOLON, "Expect ';' after return value.")
+	return ReturnStatement{
+		Keyword: keyword,
+		Value:   value,
+	}
 }
 
 func (p *Parser) varDeclaration() Statement {

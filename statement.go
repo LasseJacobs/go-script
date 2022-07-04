@@ -12,6 +12,7 @@ type StatementVisitor interface {
 	visitIfStmt(expr IfStatement) Any
 	visitWhileStmt(expr WhileStatement) Any
 	visitFunctionStmt(expr FunctionStatement) Any
+	visitReturnStmt(expr ReturnStatement) Any
 }
 
 type PrintStatement struct {
@@ -66,11 +67,6 @@ func (b WhileStatement) Accept(visitor StatementVisitor) Any {
 	return visitor.visitWhileStmt(b)
 }
 
-/*
-"Function   : Token name, List<Token> params," +
-                  " List<Stmt> body"
-*/
-
 type FunctionStatement struct {
 	Name   Token
 	Params []Token
@@ -79,4 +75,13 @@ type FunctionStatement struct {
 
 func (b FunctionStatement) Accept(visitor StatementVisitor) Any {
 	return visitor.visitFunctionStmt(b)
+}
+
+type ReturnStatement struct {
+	Keyword Token
+	Value   Expression
+}
+
+func (b ReturnStatement) Accept(visitor StatementVisitor) Any {
+	return visitor.visitReturnStmt(b)
 }

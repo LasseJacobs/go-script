@@ -46,19 +46,23 @@ func (i *Interpreter) Interpret(statements []Statement) {
 	}
 }
 
-func (i *Interpreter) execute(statement Statement) {
-	statement.Accept(i)
+func (i *Interpreter) execute(statement Statement) Any {
+	return statement.Accept(i)
 }
 
-func (i *Interpreter) executeBlock(statements []Statement, environment *Environment) {
+func (i *Interpreter) executeBlock(statements []Statement, environment *Environment) Any {
 	previous := i.env
 	defer func() {
 		i.env = previous
 	}()
 	i.env = environment
 	for _, stmt := range statements {
-		i.execute(stmt)
+		ret := i.execute(stmt)
+		if ret != nil {
+			return ret
+		}
 	}
+	return nil
 }
 
 func (i *Interpreter) visitBinaryExpr(expr BinaryExpression) Any {
@@ -179,8 +183,7 @@ func (i *Interpreter) visitVarStmt(stmt VarStatement) Any {
 }
 
 func (i *Interpreter) visitBlockStmt(stmt BlockStatement) Any {
-	i.executeBlock(stmt.Statements, NewEnvironmentWithEnclosing(i.env))
-	return nil
+	return i.executeBlock(stmt.Statements, NewEnvironmentWithEnclosing(i.env))
 }
 
 func (i *Interpreter) visitIfStmt(stmt IfStatement) Any {
@@ -200,9 +203,17 @@ func (i *Interpreter) visitWhileStmt(stmt WhileStatement) Any {
 }
 
 func (i *Interpreter) visitFunctionStmt(stmt FunctionStatement) Any {
-	function := NewFunction(stmt)
+	function := NewFunction(stmt, i.env)
 	i.env.define(stmt.Name.Lexeme, function)
 	return nil
+}
+
+func (i *Interpreter) visitReturnStmt(stmt ReturnStatement) Any {
+	var value Any = nil
+	if stmt.Value != nil {
+		value = i.evaluate(stmt.Value)
+	}
+	return value
 }
 
 /*
@@ -230,6 +241,9 @@ func (i *Interpreter) isEqual(a Any, b Any) bool {
 func (i *Interpreter) stringify(object Any) string {
 	if object == nil {
 		return "nil"
+	}
+	if f, ok := object.(float64); ok {
+		return fmt.Sprintf("%f", f)
 	}
 	return fmt.Sprintf("%s", object)
 }

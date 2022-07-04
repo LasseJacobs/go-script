@@ -2,10 +2,11 @@ package main
 
 type Function struct {
 	Declaration FunctionStatement
+	Closure     *Environment
 }
 
-func NewFunction(Declaration FunctionStatement) Function {
-	return Function{Declaration: Declaration}
+func NewFunction(declaration FunctionStatement, closure *Environment) Function {
+	return Function{Declaration: declaration, Closure: closure}
 }
 
 func (f Function) Arity() int {
@@ -13,12 +14,11 @@ func (f Function) Arity() int {
 }
 
 func (f Function) Call(interpreter *Interpreter, arguments []Any) Any {
-	localEnv := NewEnvironmentWithEnclosing(interpreter.globals)
+	localEnv := NewEnvironmentWithEnclosing(f.Closure)
 	for i, param := range f.Declaration.Params {
 		localEnv.define(param.Lexeme, arguments[i])
 	}
-	interpreter.executeBlock(f.Declaration.Body, localEnv)
-	return nil
+	return interpreter.executeBlock(f.Declaration.Body, localEnv)
 }
 
 func (f Function) String() string {
