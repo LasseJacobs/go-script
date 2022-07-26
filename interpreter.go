@@ -27,12 +27,13 @@ func NewRuntimeError(token Token, message string) RuntimeError {
 type Interpreter struct {
 	globals *Environment
 	env     *Environment
+	locals  map[Expression]int
 }
 
 func NewInterpreter() *Interpreter {
 	globals := NewEnvironment()
 	globals.define("clock", clockFn{})
-	return &Interpreter{globals: globals, env: globals}
+	return &Interpreter{globals: globals, env: globals, locals: make(map[Expression]int)}
 }
 
 func (i *Interpreter) Interpret(statements []Statement) {
@@ -48,6 +49,11 @@ func (i *Interpreter) Interpret(statements []Statement) {
 
 func (i *Interpreter) execute(statement Statement) Any {
 	return statement.Accept(i)
+}
+
+func (i *Interpreter) Resolve(expr Expression, depth int) Any {
+	i.locals[expr] = depth
+	return nil
 }
 
 func (i *Interpreter) executeBlock(statements []Statement, environment *Environment) Any {
@@ -139,7 +145,14 @@ func (i *Interpreter) visitVarExpr(expr VariableExpression) Any {
 
 func (i *Interpreter) visitAssignExpr(expr AssignExpression) Any {
 	value := i.evaluate(expr.Value)
-	i.env.assign(expr.Name, value)
+	//old way: i.env.assign(expr.Name, value)
+	distance, ok := i.locals[expr]
+	if ok {
+		i.env.assignAt(distance, expr.Name, value)
+	} else {
+		i.globals.assign(expr.Name, value)
+	}
+
 	return value
 }
 
@@ -262,4 +275,13 @@ func (i *Interpreter) checkNumberOperands(operator Token, left Any, right Any) {
 		return
 	}
 	panic(RuntimeError{token: operator, message: "Operands must be a numbers."})
+}
+
+func (i *Interpreter) lookUpVariable(name Token, expr Expression) Any {
+	distance, ok := i.locals[expr]
+	if ok {
+		return i.env.getAt(distance, name.Lexeme)
+	} else {
+		return i.globals.get(name)
+	}
 }

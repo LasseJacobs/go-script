@@ -50,6 +50,13 @@ func run(source string) {
 		return
 	}
 
+	resolver := NewResolver(interpreter)
+	resolver.Resolve(stmts)
+
+	if hadError {
+		return
+	}
+
 	interpreter.Interpret(stmts)
 }
 

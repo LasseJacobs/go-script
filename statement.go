@@ -5,14 +5,14 @@ type Statement interface {
 }
 
 type StatementVisitor interface {
-	visitPrintStmt(expr PrintStatement) Any
-	visitExprStmt(expr ExpressionStatement) Any
-	visitVarStmt(expr VarStatement) Any
-	visitBlockStmt(expr BlockStatement) Any
-	visitIfStmt(expr IfStatement) Any
-	visitWhileStmt(expr WhileStatement) Any
-	visitFunctionStmt(expr FunctionStatement) Any
-	visitReturnStmt(expr ReturnStatement) Any
+	visitPrintStmt(stmt PrintStatement) Any
+	visitExprStmt(stmt ExpressionStatement) Any
+	visitVarStmt(stmt VarStatement) Any
+	visitBlockStmt(stmt BlockStatement) Any
+	visitIfStmt(stmt IfStatement) Any
+	visitWhileStmt(stmt WhileStatement) Any
+	visitFunctionStmt(stmt FunctionStatement) Any
+	visitReturnStmt(stmt ReturnStatement) Any
 }
 
 type PrintStatement struct {
